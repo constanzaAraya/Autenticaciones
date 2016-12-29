@@ -1,0 +1,18 @@
+{
+    "remotePath": "/Autenticacion",
+    "host": "192.168.11.73",
+    "username": "caraya",
+    "password": "enor123.",
+    "port": 21,
+    "protocol": "ftp",
+    "uploadOnSave": true,
+    "passive": false,
+    "debug": false,
+    "privateKeyPath": null,
+    "ignore": [
+        "\\.vscode",
+        "\\.git",
+        "\\vendor",
+        "\\.DS_Store"
+    ]
+}
