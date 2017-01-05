@@ -16,7 +16,7 @@ class UserController extends Controller
      */
     public function __construct()
     {
-        parent::__construct();
+        //parent::__construct();
         
         $this->middleware('auth',
             [
@@ -26,50 +26,62 @@ class UserController extends Controller
                 ]
             ]);
     }
-
-    /**
-     * [login description]
-     * @param  Request $req [description]
-     * @return [type]       [description]
-     */
+    
     public function login (Request $req) {
         $mail = $req->input('email');
         $pass = $req->input('password');
 
         if(Auth::check()) {
-            $user = Auth::user();            
+            $users = Auth::user();
             return response()->json([
                 'status' => 'ok',
-                'token' => $user->token
-                ], 200);
+                'token' => $users->token
+            ], 200);
         } else {
-            $user = User::where('email', $mail)->first();
-            $idUser=$user->id;
-            if($user) {
-                if(Crypt::decrypt($user->password) == $pass) {
-                    return response()->json([
-                        'status' => 'ok',
-                        'id' => $user->id,
-                        'name' => $user->nombre,
-                        'lastname' => $user->apellido,
-                        'email' => $user->email,
-                        'token' => $user->token
-                    ], 200);
-                }
-            }
-        }        
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Usuario o contraseña incorrectos.'
-            ], 400);
-    }
+            $users = User::where('email', $mail)->first();
+            if($users){
+                if(Crypt::decrypt($users->password) == $pass) {
+                    $apps = $users->aplications()->get();
+                    //print_r($apps);
+                    $permisos = array();
+                    
+                    $count=0;
+                    foreach ($users->aplications as $app) {
+                        $count++;
+                        $id=$app->id;
+                        
+                        array_push($permisos, array(
+                                'id' => $app->id, 
+                                'alias' => $app->alias,
+                                'url' => $app->url_app,
+                                    'permisos' => [
+                                        'Estado' => $app->pivot->activo,
+                                        'Verificacion' => $app->pivot->primerLogin
+                                ]
+                            ));
+                    }
 
-    /**
-     * [get description]
-     * @param  Request $req [description]
-     * @param  [type]  $id  [description]
-     * @return [type]       [description]
-     */
+                    if($count>0){
+                            return response()->json([
+                                'status' => 'ok',
+                                'usuario' => $users,
+                                'app' => $permisos
+                            ], 200);
+                        }else{
+                            return response()->json([
+                                'status' => 'ok',
+                                'id' => $users,
+                                'app' => 'No posee aplicaciones'
+                            ], 200);
+                        }    
+                }
+            }        
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Usuario o contraseña incorrectos.'
+            ], 400);
+        }
+    }
 
     //Obtiene datos de usuario 
     public function get (Request $req, $id) {
@@ -87,28 +99,21 @@ class UserController extends Controller
         ], 404);
     }
 
-    /**
-     * [create description]
-     * @param  Request $req [description]
-     * @return [type]       [description]
-     */
-
     //Crea usuario
     public function create (Request $req) {
         $datos = $req->all();
         $this->validate($req, [
           'nombre' => 'required',
           'apellido' => 'required',
-          'email' => 'required|email|unique:users',
+          'email' => 'required|email|unique:usuarios',
           'password' => 'required',
           'cargo' => 'required',
           'departamento' => 'required'
         ]);
         $datos['token'] = md5(uniqid());
         $datos['password'] = Crypt::encrypt($datos['password']);
-        
-        try{
-            $usuario = User::create($datos);
+        $usuario = User::create($datos);
+        try{            
             return response()->json([
                 'status' => 'ok',
                 'message' => 'Usuario creado!',
@@ -123,45 +128,38 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * [update description]
-     * @param  Request $req [description]
-     * @param  [type]  $id  [description]
-     * @return [type]       [description]
-     */
 
      //Modifica usuario
     public function update (Request $req, $id) {
-        $idUser = User::find($id);
-        if($idUser){
-           $idUser->nombre = $req->input('nombre');
-           $idUser->apellido = $req->input('apellido');
-           $idUser->email = $req->input('email');
-           $idUser->cargo = $req->input('cargo');
-           $idUser->departamento = $req->input('departamento');
-
+        $usuario = User::find($id);
+        if($usuario){
+           $usuario->nombre = $req->input('nombre');
+           $usuario->apellido = $req->input('apellido');
+           $usuario->email = $req->input('email');
+           $usuario->cargo = $req->input('cargo');
+           $usuario->departamento = $req->input('departamento');
+           
            $this->validate($req, [
-               'nombre' => 'required',
+                'nombre' => 'required',
                 'apellido' => 'required',
-                'email' => 'required|email|unique:users',
+                'email' => 'required|email|unique:usuarios',
                 'cargo' => 'required',
                 'departamento' => 'required'
            ]);
-            /*print_r($idUser->name); print_r($idUser->lastname); print_r($idUser->email);*/
             try {
-                $modif=$idUser->save();
-                if($modif){
+                $modifica=$usuario->save();
+                if($modifica){
                     return response()->json([
                         'status' => 'ok',
                         'message' => 'Usuario modificado!',
-                        'usuario' => $idUser
+                        'usuario' => $usuario
                     ], 200); 
                 }
             } 
             catch (\Illuminate\Database\QueryException $e) {
                 return response()->json([
                    'status' => 'Error BD',
-                   'message' => 'Problemas en la modificación!'
+                   'message' => 'Problemas en la modificacion!'
                 ], 500);
             }            
         }
@@ -171,15 +169,7 @@ class UserController extends Controller
         ], 404);         
     }
 
-    
-    /**
-     * [delete description]
-     * @param  Request $req [description]
-     * @param  [type]  $id  [description]
-     * @return [type]       [description]
-     */
-
-     //elimina usuario
+    //elimina usuario
     public function delete (Request $req, $id) {
         $idsUser = User::find($id);
         if($idsUser){            
@@ -220,14 +210,15 @@ class UserController extends Controller
            if(Crypt::decrypt($idUser_pass->password) == $password) {
               if($pass1==$pass2){
                  $idUser_pass->password = Crypt::encrypt($pass1);
-                 $idUser_pass->api_token = md5(uniqid());
+                 $idUser_pass->token = md5(uniqid());
+                 $modPass=$idUser_pass->save();
                  try {
                     $modPass=$idUser_pass->save();
                     if($modPass){
                         return response()->json([
                             'status' => 'ok',
-                            'message' => 'Password de Usuario modificada!',
-                            'IDuser' => $idUser_pass->id
+                            'IDuser' => $idUser_pass->id,
+                            'message' => 'Password de Usuario modificada!'
                         ], 200); 
                     }
                  } 

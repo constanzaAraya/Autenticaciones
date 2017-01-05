@@ -1,6 +1,6 @@
 <?php
 
-$app->group(['prefix' => 'users'], function () use ($app) {
+$app->group(['prefix' => 'user'], function () use ($app) {
     $app->post('login', 'UserController@login');
     $app->post('', 'UserController@create');
     $app->get('/{id}', 'UserController@get');

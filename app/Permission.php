@@ -2,7 +2,7 @@
 namespace App;
 use Illuminate\Database\Eloquent\Model;
 
-class Permissions extends Model
+class Permission extends Model
 {
     protected $table = 'permisos';
 
@@ -11,6 +11,7 @@ class Permissions extends Model
      *
      * @var array
      */
+
     protected $fillable = [
         'usuario_id',
         'aplicacion_id',
@@ -25,10 +26,12 @@ class Permissions extends Model
         'primerLogin'
     ];
     /*
-    public function aplicacion() {
-        return $this->belongsToMany('App\Aplication')->withTimestamps();
+    public function users()
+    {
+        return $this->morphToMany('App\User', 'permisos');
     }
-    public function cliente() {
-        return $this->belongsToMany('App\Client')->withTimestamps();
+    public function apps()
+    {
+        return $this->morphToMany('App\Aplication', 'permisos');
     }*/
 }

@@ -17,10 +17,13 @@ class Aplication extends Model implements AuthenticatableContract, AuthorizableC
      *
      * @var array
      */
+    protected $table = 'aplicaciones';
+    
     protected $fillable = [
-        'id',
         'nombre',
-        'alias'
+        'alias',
+        'url_app',
+        'url_api'
     ];
 
     /**
@@ -32,10 +35,12 @@ class Aplication extends Model implements AuthenticatableContract, AuthorizableC
     protected $visible = [
         'id',
         'nombre',
-        'alias'
+        'alias',
+        'url_app',
+        'url_api'
     ];
     
-    public function clients () {
-        return $this->belongsToMany('App\Client', 'permisos', 'aplicacion_id', 'usuario_id')->withTimestamps();
+    public function users () {
+        return $this->belongsToMany('App\User', 'permisos', 'aplicacion_id', 'usuario_id')->withTimestamps();
     }
 }
