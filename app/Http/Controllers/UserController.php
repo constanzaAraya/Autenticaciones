@@ -41,7 +41,7 @@ class UserController extends Controller
             $users = User::where('email', $mail)->first();
             if($users){
                 if(Crypt::decrypt($users->password) == $pass) {
-                    $apps = $users->aplications()->get();
+                    //$apps = $users->aplications()->get();
                     //print_r($apps);
                     $permisos = array();
                     
@@ -51,14 +51,14 @@ class UserController extends Controller
                         $id=$app->id;
                         
                         array_push($permisos, array(
-                                'id' => $app->id, 
-                                'alias' => $app->alias,
-                                'url' => $app->url_app,
-                                    'permisos' => [
-                                        'Estado' => $app->pivot->activo,
-                                        'Verificacion' => $app->pivot->primerLogin
+                            'id' => $app->id, 
+                            'alias' => $app->alias,
+                            'url' => $app->url_app,
+                                'permisos' => [
+                                    'estado(Des[0]-Act[1])' => $app->pivot->activo,
+                                    '1erlog(No1erLog[0]-1erLog[1])' => $app->pivot->primerLogin
                                 ]
-                            ));
+                        ));
                     }
 
                     if($count>0){
